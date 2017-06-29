@@ -28,7 +28,7 @@ class ExpensiveOperations(object):
 e = ExpensiveOperations()
 e.other_attribute = 1
 print(e.expensive_attribute)  # Takes a long time.
-print(e.expensive_attribute)  # Very quick; just retrieve from cached
+print(e.expensive_attribute)  # Very quick; just retrieve from cache
 v = e.other_attribute
 
 e.other_attribute = 2  # expensive_attribute should be different now!
@@ -61,6 +61,14 @@ gs['value'] = 7
 gs.attr = 1
 
 print(GlobalState()['value'] + GlobalState().attr)  # 8
+```
+
+For Python 2 and 3 compatibility, use it as a decorator:
+
+```python
+@Singleton.as_decorator
+class Class(object):
+    pass
 ```
 
 ## Installing
