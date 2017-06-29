@@ -52,7 +52,7 @@ class Singleton(type):
         :param name: Name of the new class (Used in its __repr__ if no object_name)
         :type name: str
         :param dict: Optional dictionary of the classes' attributes
-        :type dict: Dict[str, Any]
+        :type dict: Optional[Dict[str, Any]]
         :param object_name: Name of an instance of the singleton. Used in __repr__.
         :type object_name: Optional[str]
         :return: A new Singleton instance

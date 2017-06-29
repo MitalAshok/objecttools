@@ -33,7 +33,7 @@ Works just like a normal property, but returned values are cached:
     e.other_attribute = 1
     print(e.expensive_attribute)  # Takes a long time.
     print(e.expensive_attribute)  # Very quick; just retrieve from cache
-    v = e.other_attribute
+    v = e.expensive_attribute
 
     e.other_attribute = 2  # expensive_attribute should be different now!
     print(e.expensive_attribute)  # Old value that is wrong.
