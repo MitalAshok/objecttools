@@ -2,6 +2,7 @@ import unittest
 
 from objecttools.singletons import *
 
+
 @Singleton.as_decorator
 class Test(object):
     pass

@@ -25,7 +25,7 @@ with open(path.join(__dir__, 'README.rst'), encoding='utf-8') as f:
 
 def test_suite():
     test_loader = unittest.TestLoader()
-    return test_loader.discover(path.join(__dir__, 'tests'), pattern='test*.py')
+    return test_loader.discover(path.join(__dir__, 'tests'), pattern='__init__.py')
 
 setup_args = dict(
     name='objecttools',
