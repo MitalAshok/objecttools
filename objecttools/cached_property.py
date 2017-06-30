@@ -1,3 +1,5 @@
+"""Descriptors that cache values from a getter, like a property"""
+
 import threading
 
 from objecttools.singletons import Singleton
@@ -16,6 +18,7 @@ _NO_NAME_ERROR = (
     'Cannot get name of attribute to assign to for instance "{instance!r}" of '
     'type "{type!r}".'
 )
+
 
 class CachedProperty(object):
     """A property that caches its return value"""
@@ -126,7 +129,9 @@ class CachedProperty(object):
                 except AttributeError:
                     pass
                 if not hasattr(instance, '__dict__'):
-                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
+                    raise AttributeError(
+                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
+                    )
             cached = instance.__dict__.get(self.name, _missing)
             if cached is _missing:
                 cached = instance.__dict__[self.name] = self._getter(instance)
@@ -146,7 +151,9 @@ class CachedProperty(object):
                 except AttributeError:
                     pass
                 if not hasattr(instance, '__dict__'):
-                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
+                    raise AttributeError(
+                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
+                    )
             instance.__dict__[self.name] = value
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
@@ -163,7 +170,9 @@ class CachedProperty(object):
                 except AttributeError:
                     pass
                 if not hasattr(instance, '__dict__'):
-                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
+                    raise AttributeError(
+                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
+                    )
             instance.__dict__.pop(self.name, None)
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))

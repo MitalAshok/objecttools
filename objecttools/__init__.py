@@ -1,3 +1,5 @@
+"""Various tools for working with objects and classes in Python"""
+
 from objecttools import cached_property, singletons
 
 from objecttools.cached_property import *
@@ -21,9 +23,10 @@ __status__ = 'Development'
 try:
     from __builtin__ import cmp
 except ImportError:
-    def cmp(a, b):
-        if callable(getattr(a, '__cmp__', None)):
-            cmp = a.__cmp__(b)
+    def cmp(x, y):
+        """Return -1 if x < y, 0 if x == y, +1 if x > y."""
+        if callable(getattr(x, '__cmp__', None)):
+            cmp = x.__cmp__(y)
             if cmp is not NotImplemented:
                 if cmp == 0:
                     return 0
@@ -31,8 +34,8 @@ except ImportError:
                     return -1
                 if cmp > 0:
                     return 1
-        if callable(getattr(b, '__cmp__', None)):
-            cmp = b.__cmp__(a)
+        if callable(getattr(y, '__cmp__', None)):
+            cmp = y.__cmp__(x)
             if cmp is not NotImplemented:
                 if cmp == 0:
                     return 0
@@ -40,4 +43,4 @@ except ImportError:
                     return 1
                 if cmp > 0:
                     return -1
-        return (a > b) - (a < b)
+        return (x > y) - (x < y)

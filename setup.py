@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
+import sys
+import os
+import unittest
+import codecs
+
 from setuptools import setup, find_packages
 
-import sys
-import unittest
 
-from os import path
-from codecs import open
-
-
-__dir__ = path.abspath(path.dirname(__file__))
+__dir__ = os.path.abspath(os.path.dirname(__file__))
 
 # To prevent a redundant __version__, import it from the packages
 sys.path.insert(0, __dir__)
@@ -19,13 +18,14 @@ try:
 finally:
     sys.path.pop(0)
 
-with open(path.join(__dir__, 'README.rst'), encoding='utf-8') as f:
+with codecs.open(os.path.join(__dir__, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 
 def test_suite():
+    """Load tests from tests/__init__.py"""
     test_loader = unittest.TestLoader()
-    return test_loader.discover(path.join(__dir__, 'tests'), pattern='__init__.py')
+    return test_loader.discover(os.path.join(__dir__, 'tests'), pattern='__init__.py')
 
 setup_args = dict(
     name='objecttools',
