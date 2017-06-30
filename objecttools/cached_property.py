@@ -1,6 +1,6 @@
 import threading
 
-from objecttools import Singleton
+from objecttools.singletons import Singleton
 
 __all__ = ('CachedProperty', 'ThreadedCachedProperty')
 
