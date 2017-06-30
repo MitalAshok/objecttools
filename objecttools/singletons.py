@@ -61,7 +61,10 @@ class Singleton(type):
         if dict is None:
             dict = {}
         _repr = name + '()' if object_name is None else object_name
-        dict.setdefault('__repr__', staticmethod(lambda self=None: _repr))
+
+        def __repr__(self=None):
+            return _repr
+        dict.setdefault('__repr__', __repr__)
         return mcs(name, (object,), dict)
 
     @classmethod

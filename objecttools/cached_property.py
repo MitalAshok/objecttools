@@ -1,10 +1,11 @@
 import threading
 
-from objecttools import singletons
+from objecttools import Singleton
 
 __all__ = ('CachedProperty', 'ThreadedCachedProperty')
 
-_missing = singletons.Singleton.create('_Missing', object_name='_missing')()
+_Missing = Singleton.create('_Missing', object_name='_missing')
+_missing = _Missing()
 
 
 class CachedProperty(object):
@@ -153,24 +154,24 @@ class ThreadedCachedProperty(CachedProperty):
 
     def getter(self, fget):
         with self.lock:
-            super(ThreadedCachedProperty, self).getter(fget)
+            return super(ThreadedCachedProperty, self).getter(fget)
 
     def setter(self, can_set=None):
         with self.lock:
-            super(ThreadedCachedProperty, self).setter(can_set)
+            return super(ThreadedCachedProperty, self).setter(can_set)
 
     def deleter(self, can_delete=None):
         with self.lock:
-            super(ThreadedCachedProperty, self).deleter(can_delete)
+            return super(ThreadedCachedProperty, self).deleter(can_delete)
 
     def __get__(self, instance=None, owner=None):
         with self.lock:
-            super(ThreadedCachedProperty, self).__get__(instance, owner)
+            return super(ThreadedCachedProperty, self).__get__(instance, owner)
 
     def __set__(self, instance=None, value=None):
         with self.lock:
-            super(ThreadedCachedProperty, self).__set__(instance, value)
+            return super(ThreadedCachedProperty, self).__set__(instance, value)
 
     def __delete__(self, instance=None):
         with self.lock:
-            super(ThreadedCachedProperty, self).__delete__(instance)
+            return super(ThreadedCachedProperty, self).__delete__(instance)
