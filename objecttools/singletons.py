@@ -36,10 +36,18 @@ class Singleton(type):
         :rtype: NoneType
         """
         super(Singleton, cls).__init__(name, bases, dict)
-        self = cls()
-        cls.__self__ = self
+        old_new = cls.__new__
+        this_cls = cls
 
         def __new__(cls=None):
+            self = old_new(this_cls)
+            this_cls.__init__(self)
+            cls.__self__ = self
+
+            def __new__(cls=None):
+                return self
+
+            cls.__new__ = staticmethod(__new__)
             return self
 
         cls.__new__ = staticmethod(__new__)
