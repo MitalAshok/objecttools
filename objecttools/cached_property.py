@@ -7,6 +7,15 @@ __all__ = ('CachedProperty', 'ThreadedCachedProperty')
 _Missing = Singleton.create('_Missing', object_name='_missing')
 _missing = _Missing()
 
+_NO_DICT_ERROR = (
+    'Instance "{instance!r}" of type "{type!r}" has no __dict__ attribute. '
+    'If it has a __slots__ attribute, please add `__dict__` to the slots.'
+)
+
+_NO_NAME_ERROR = (
+    'Cannot get name of attribute to assign to for instance "{instance!r}" of '
+    'type "{type!r}".'
+)
 
 class CachedProperty(object):
     """A property that caches its return value"""
@@ -110,37 +119,54 @@ class CachedProperty(object):
             return self
         if self._getter is None:
             raise AttributeError('unreadable attribute')
-        if self.name is not None and hasattr(instance, '__dict__'):
+        if self.name is not None:
+            if not hasattr(instance, '__dict__'):
+                try:
+                    instance.__dict__ = {}
+                except AttributeError:
+                    pass
+                if not hasattr(instance, '__dict__'):
+                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
             cached = instance.__dict__.get(self.name, _missing)
             if cached is _missing:
                 cached = instance.__dict__[self.name] = self._getter(instance)
             return cached
-        # No name to get cached value or no __dict__; calculate normally
-        return self._getter(instance)
+        else:
+            raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
     def __set__(self, instance=None, value=None):
         if instance is None:
             return self
         if not self.can_set:
             raise AttributeError('can\'t set attribute')
-        if self.name is not None and hasattr(instance, '__dict__'):
+        if self.name is not None:
+            if not hasattr(instance, '__dict__'):
+                try:
+                    instance.__dict__ = {}
+                except AttributeError:
+                    pass
+                if not hasattr(instance, '__dict__'):
+                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
             instance.__dict__[self.name] = value
-        elif self.name is None:
-            raise ValueError('Cannot get name of attribute to delete')
         else:
-            raise ValueError('Instance has no dictionary')
+            raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
     def __delete__(self, instance=None):
         if instance is None:
             return self
         if not self.can_delete:
             raise AttributeError('can\'t delete attribute')
-        if self.name is not None and hasattr(instance, '__dict__'):
+        if self.name is not None:
+            if not hasattr(instance, '__dict__'):
+                try:
+                    instance.__dict__ = {}
+                except AttributeError:
+                    pass
+                if not hasattr(instance, '__dict__'):
+                    raise AttributeError(_NO_DICT_ERROR.format(instance=instance, type=type(instance)))
             instance.__dict__.pop(self.name, None)
-        elif self.name is None:
-            raise ValueError('Cannot get name of attribute to delete')
         else:
-            raise ValueError('Instance has no dictionary')
+            raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
 
 class ThreadedCachedProperty(CachedProperty):
@@ -148,7 +174,7 @@ class ThreadedCachedProperty(CachedProperty):
     def __init__(self, fget=None, can_set=False, can_del=False,
                  doc=None, name=None, lock=threading.RLock):
         super(ThreadedCachedProperty, self).__init__(fget, can_set, can_del, doc, name)
-        if isinstance(lock, type):
+        if callable(lock):
             lock = lock()
         self.lock = lock
 
