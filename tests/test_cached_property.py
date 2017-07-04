@@ -10,6 +10,7 @@ class TestCachedProperty(unittest.TestCase):
         class Test(object):
             @CachedProperty
             def x(self):
+                """dummy doc"""
                 get_access.append(True)
                 return 1
 
@@ -22,6 +23,7 @@ class TestCachedProperty(unittest.TestCase):
         class Test(object):
             @CachedProperty
             def x(self):
+                """dummy doc"""
                 return 1
 
         t = Test()
@@ -45,6 +47,7 @@ class TestCachedProperty(unittest.TestCase):
         class Test(object):
             @CachedProperty
             def x(self):
+                """dummy doc"""
                 get_access.append(True)
                 return len(get_access)
 
@@ -66,6 +69,7 @@ class TestCachedProperty(unittest.TestCase):
         class Test(object):
             @CachedProperty
             def x(self):
+                """dummy doc"""
                 get_access.append(True)
                 return len(get_access)
 
@@ -80,6 +84,7 @@ class TestCachedProperty(unittest.TestCase):
         self.assertEqual(t.x, 12, 'Did not set cache properly')
         self.assertEqual(t.x, 12, 'Did not get cache properly')
         self.assertEqual(len(get_access), 1, 'Unexpected usage of getter')
+
 
 if __name__ == '__main__':
     unittest.main()

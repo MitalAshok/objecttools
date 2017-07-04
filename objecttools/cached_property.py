@@ -22,7 +22,7 @@ _NO_NAME_ERROR = (
 
 class CachedProperty(object):
     """A property that caches its return value"""
-    __slots__ = ('_name', '_getter', '_setter', '_deleter')
+    __slots__ = ('_name', '_getter', '_setter', '_deleter', '_doc')
 
     def __init__(self, fget=None, can_set=False, can_del=False, doc=None, name=None):
         if doc is None:
@@ -32,8 +32,7 @@ class CachedProperty(object):
         self._getter = fget
         self._setter = bool(can_set)
         self._deleter = bool(can_del)
-        if doc is not None:
-            self.__doc__ = doc
+        self.__doc__ = doc
         self._name = name
 
     @property
@@ -51,6 +50,21 @@ class CachedProperty(object):
     @name.deleter
     def name(self):
         self._name = None
+
+    @property
+    def __doc__(self):
+        return self._doc
+
+    @__doc__.setter
+    def __doc__(self, value):
+        if isinstance(value, str) or value is None:
+            self._doc = value
+        else:
+            raise TypeError('"__doc__" must be a str or None')
+
+    @__doc__.deleter
+    def __doc__(self):
+        self._doc = None
 
     def getter(self, fget):
         """
@@ -93,6 +107,10 @@ class CachedProperty(object):
     def can_set(self, value):
         self.setter(value)
 
+    @can_set.deleter
+    def can_set(self):
+        self._setter = False
+
     def deleter(self, can_delete=None):
         """
         Change if this descriptor's can be invalidated through `del obj.attr`.
@@ -125,6 +143,10 @@ class CachedProperty(object):
     @can_delete.setter
     def can_delete(self, value):
         self.deleter(value)
+
+    @can_delete.deleter
+    def can_delete(self):
+        self._deleter = False
 
     def __get__(self, instance=None, owner=None):
         if instance is None:
@@ -189,7 +211,7 @@ class CachedProperty(object):
 
 class ThreadedCachedProperty(CachedProperty):
     """Thread-safe version of CachedProperty"""
-    __slots__ = ('_name', '_getter', '_setter', '_deleter', 'lock')
+    __slots__ = ('_name', '_getter', '_setter', '_deleter', 'lock', '_doc')
 
     def __init__(self, fget=None, can_set=False, can_del=False,
                  doc=None, name=None, lock=threading.RLock):
@@ -221,3 +243,6 @@ class ThreadedCachedProperty(CachedProperty):
     def __delete__(self, instance=None):
         with self.lock:
             return super(ThreadedCachedProperty, self).__delete__(instance)
+
+    # Doesn't work otherwise, as overridden with docstring
+    __doc__ = CachedProperty.__doc__
