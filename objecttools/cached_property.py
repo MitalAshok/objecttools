@@ -22,6 +22,8 @@ _NO_NAME_ERROR = (
 
 class CachedProperty(object):
     """A property that caches its return value"""
+    __slots__ = ('_name', '_getter', '_setter', '_deleter')
+
     def __init__(self, fget=None, can_set=False, can_del=False, doc=None, name=None):
         if doc is None:
             doc = getattr(fget, '__doc__', None)
@@ -41,7 +43,14 @@ class CachedProperty(object):
 
     @name.setter
     def name(self, value):
-        self._name = value
+        if isinstance(value, str) or value is None:
+            self._name = value
+        else:
+            raise TypeError('"name" must be a str or None')
+
+    @name.deleter
+    def name(self):
+        self._name = None
 
     def getter(self, fget):
         """
@@ -54,8 +63,8 @@ class CachedProperty(object):
         """
         if getattr(self, '__doc__', None) is None:
             self.__doc__ = getattr(fget, '__doc__', None)
-        if self._name is None:
-            self._name = getattr(fget, '__name__', None)
+        if self.name is None:
+            self.name = getattr(fget, '__name__', None)
         self._getter = fget
         return self
 
@@ -180,6 +189,8 @@ class CachedProperty(object):
 
 class ThreadedCachedProperty(CachedProperty):
     """Thread-safe version of CachedProperty"""
+    __slots__ = ('_name', '_getter', '_setter', '_deleter', 'lock')
+
     def __init__(self, fget=None, can_set=False, can_del=False,
                  doc=None, name=None, lock=threading.RLock):
         super(ThreadedCachedProperty, self).__init__(fget, can_set, can_del, doc, name)
