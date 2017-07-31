@@ -126,7 +126,7 @@ class ObjectProxy(object):
     Python version.
     """
     def __init__(self, obj):
-        object.__setattr__(self, '_obj', obj)
+        object.__setattr__(self, '_obj', get_wrapped_object(obj))
 
     def __del__(self):
         """del self"""

@@ -26,3 +26,8 @@ class TestObjectProxy(unittest.TestCase):
         self.assertTrue(ObjectProxy([1]))
         self.assertFalse(ObjectProxy(0))
         self.assertFalse(ObjectProxy([]))
+
+    def test_attributes(self):
+        d = {1: 1, 2: 1}
+        self.assertEqual(set(ObjectProxy(d).keys()), set(d.keys()))
+        self.assertEqual(ObjectProxy('a').upper(), 'A')
