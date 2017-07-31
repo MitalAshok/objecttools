@@ -20,6 +20,21 @@ _NO_NAME_ERROR = (
 )
 
 
+def _get_dict(obj):
+    __dict__ = getattr(obj, '__dict__', _missing)
+    if __dict__ is _missing:
+        try:
+            obj.__dict__ = {}
+        except AttributeError:
+            pass
+        __dict__ = getattr(obj, '__dict__', _missing)
+        if __dict__ is _missing:
+            raise AttributeError(
+                _NO_DICT_ERROR.format(instance=obj, type=type(obj))
+            )
+    return __dict__
+
+
 class CachedProperty(object):
     """A property that caches its return value"""
     __slots__ = ('_name', '_getter', '_setter', '_deleter', '_doc')
@@ -154,18 +169,10 @@ class CachedProperty(object):
         if self._getter is None:
             raise AttributeError('unreadable attribute')
         if self.name is not None:
-            if not hasattr(instance, '__dict__'):
-                try:
-                    instance.__dict__ = {}
-                except AttributeError:
-                    pass
-                if not hasattr(instance, '__dict__'):
-                    raise AttributeError(
-                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
-                    )
-            cached = instance.__dict__.get(self.name, _missing)
+            __dict__ = _get_dict(instance)
+            cached = __dict__.get(self.name, _missing)
             if cached is _missing:
-                cached = instance.__dict__[self.name] = self._getter(instance)
+                cached = __dict__[self.name] = self._getter(instance)
             return cached
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
@@ -176,16 +183,7 @@ class CachedProperty(object):
         if not self.can_set:
             raise AttributeError('can\'t set attribute')
         if self.name is not None:
-            if not hasattr(instance, '__dict__'):
-                try:
-                    instance.__dict__ = {}
-                except AttributeError:
-                    pass
-                if not hasattr(instance, '__dict__'):
-                    raise AttributeError(
-                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
-                    )
-            instance.__dict__[self.name] = value
+            _get_dict(instance)[self.name] = value
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
@@ -195,18 +193,27 @@ class CachedProperty(object):
         if not self.can_delete:
             raise AttributeError('can\'t delete attribute')
         if self.name is not None:
-            if not hasattr(instance, '__dict__'):
-                try:
-                    instance.__dict__ = {}
-                except AttributeError:
-                    pass
-                if not hasattr(instance, '__dict__'):
-                    raise AttributeError(
-                        _NO_DICT_ERROR.format(instance=instance, type=type(instance))
-                    )
-            instance.__dict__.pop(self.name, None)
+            _get_dict(instance).pop(self.name, None)
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
+
+    @classmethod
+    def is_cached(cls, instance, name):
+        """
+        Return whether a property named `name` has been cached.
+
+        To check if CachedProperty `x` of object `o` is cached, use::
+
+            CachedProperty.is_cached(o, 'x')
+
+        :param instance: An object with a cached property
+        :type instance: Any
+        :param name: The name of the property to check for the cache of
+        :type name: str
+        :return: `True` if the property is cached. `False` otherwise.
+        :rtype: bool
+        """
+        return name in _get_dict(instance)
 
 
 class ThreadedCachedProperty(CachedProperty):
