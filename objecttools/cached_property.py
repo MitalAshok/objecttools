@@ -1,6 +1,7 @@
 """Descriptors that cache values from a getter, like a property"""
 
 import threading
+import types
 
 from objecttools.singletons import Singleton
 
@@ -18,6 +19,9 @@ _NO_NAME_ERROR = (
     'Cannot get name of attribute to assign to for instance "{instance!r}" of '
     'type "{type!r}".'
 )
+
+_FUNC_DOC = '__doc__' if hasattr(types.FunctionType, '__doc__') else 'func_doc'
+_FUNC_NAME = '__name__' if hasattr(types.FunctionType, '__name__') else 'func_name'
 
 
 def _get_dict(obj):
@@ -41,14 +45,14 @@ class CachedProperty(object):
 
     def __init__(self, fget=None, can_set=False, can_del=False, doc=None, name=None):
         if doc is None:
-            doc = getattr(fget, '__doc__', None)
+            doc = getattr(fget, _FUNC_DOC, None)
         if name is None:
-            name = getattr(fget, '__name__', None)
-        self._getter = fget
-        self._setter = bool(can_set)
-        self._deleter = bool(can_del)
+            name = getattr(fget, _FUNC_NAME, None)
+        self.can_set = bool(can_set)
+        self.can_delete = bool(can_del)
         self.__doc__ = doc
-        self._name = name
+        self.name = name
+        self.getter(fget)
 
     @property
     def name(self):
@@ -57,7 +61,7 @@ class CachedProperty(object):
 
     @name.setter
     def name(self, value):
-        if isinstance(value, str) or value is None:
+        if type(value) is str or value is None:
             self._name = value
         else:
             raise TypeError('"name" must be a str or None')
@@ -72,7 +76,7 @@ class CachedProperty(object):
 
     @__doc__.setter
     def __doc__(self, value):
-        if isinstance(value, str) or value is None:
+        if type(value) is str or value is None:
             self._doc = value
         else:
             raise TypeError('"__doc__" must be a str or None')
@@ -91,9 +95,9 @@ class CachedProperty(object):
         :rtype: CachedProperty
         """
         if getattr(self, '__doc__', None) is None:
-            self.__doc__ = getattr(fget, '__doc__', None)
+            self.__doc__ = getattr(fget, _FUNC_DOC, None)
         if self.name is None:
-            self.name = getattr(fget, '__name__', None)
+            self.name = getattr(fget, _FUNC_NAME, None)
         self._getter = fget
         return self
 
@@ -197,14 +201,17 @@ class CachedProperty(object):
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
-    @staticmethod
-    def is_cached(instance, name):
+    def is_cached(self, instance):
         """
         Return whether a property named `name` has been cached.
 
         To check if CachedProperty `x` of object `o` is cached, use::
 
-            CachedProperty.is_cached(o, 'x')
+            type(o).x.is_cached(o)
+
+        Or if you know that `isinstance(o, T)` (and `T.x is type(o).x`)
+
+            T.x.is_cached(o)
 
         :param instance: An object with a cached property
         :type instance: Any
@@ -213,7 +220,7 @@ class CachedProperty(object):
         :return: `True` if the property is cached. `False` otherwise.
         :rtype: bool
         """
-        return name in _get_dict(instance)
+        return self.name in _get_dict(instance)
 
 
 class ThreadedCachedProperty(CachedProperty):
@@ -250,6 +257,10 @@ class ThreadedCachedProperty(CachedProperty):
     def __delete__(self, instance=None):
         with self.lock:
             return super(ThreadedCachedProperty, self).__delete__(instance)
+
+    def is_cached(self, instance):
+        with self.lock:
+            return super(ThreadedCachedProperty, self).is_cached(instance)
 
     # Doesn't work otherwise, as overridden with docstring
     __doc__ = CachedProperty.__doc__

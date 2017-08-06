@@ -85,6 +85,24 @@ class TestCachedProperty(unittest.TestCase):
         self.assertEqual(t.x, 12, 'Did not get cache properly')
         self.assertEqual(len(get_access), 1, 'Unexpected usage of getter')
 
+    def test_is_cached(self):
+        get_access = []
+
+        class Test(object):
+            @CachedProperty
+            def x(self):
+                """dummy doc"""
+                get_access.append(True)
+                return len(get_access)
+
+        t = Test()
+        self.assertFalse(Test.x.is_cached(t), 'is_cached is wrong before cache')
+        self.assertFalse(type(t).x.is_cached(t), 'Alternate is_cached is wrong before cache')
+        self.assertEqual(t.x, 1, 'Did not call getter properly')
+        self.assertEqual(t.x, 1, 'Did not cache properly')
+        self.assertTrue(Test.x.is_cached(t), 'is_cached is wrong after cache')
+        self.assertTrue(type(t).x.is_cached(t), 'Alternate is_cached is wrong after cache')
+
 
 if __name__ == '__main__':
     unittest.main()
