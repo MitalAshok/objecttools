@@ -32,6 +32,11 @@ except ImportError:
     __div__ = __idiv__ = None
 
 try:
+    from operator import __repeat__, __irepeat__
+except ImportError:
+    __repeat__ = __irepeat__ = None
+
+try:
     __cmp__ = cmp
     __rcmp__ = sys.version_info < (2, 1)
 except NameError:
@@ -381,6 +386,13 @@ class ObjectProxy(object):
                 get_wrapped_object(self), get_wrapped_object(other)
             )
 
+    if __repeat__:
+        def __repeat__(self, other):
+            """self * other"""
+            return __repeat__(
+                get_wrapped_object(self), get_wrapped_object(other)
+            )
+
     def __radd__(self, other):
         """other + self"""
         return __add__(other, get_wrapped_object(self))
@@ -439,6 +451,13 @@ class ObjectProxy(object):
         def __rtruediv__(self, other):
             """other // self"""
             return __truediv__(other, get_wrapped_object(self))
+
+    if __repeat__:
+        def __rrepeat__(self, other):
+            """other * self"""
+            return __repeat__(
+                get_wrapped_object(other), get_wrapped_object(self)
+            )
 
     def __iadd__(self, other):
         """self += other"""
@@ -500,6 +519,13 @@ class ObjectProxy(object):
         def __itruediv__(self, other):
             """self //= other"""
             return __itruediv__(
+                get_wrapped_object(self), get_wrapped_object(other)
+            )
+
+    if __irepeat__:
+        def __irepeat__(self, other):
+            """self *= other"""
+            return __irepeat__(
                 get_wrapped_object(self), get_wrapped_object(other)
             )
 
