@@ -197,8 +197,8 @@ class CachedProperty(object):
         else:
             raise ValueError(_NO_NAME_ERROR.format(instance=instance, type=type(instance)))
 
-    @classmethod
-    def is_cached(cls, instance, name):
+    @staticmethod
+    def is_cached(instance, name):
         """
         Return whether a property named `name` has been cached.
 

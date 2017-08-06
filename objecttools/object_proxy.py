@@ -94,6 +94,11 @@ __missing__ = sys.version_info >= (3,)
 
 __await__ = sys.version_info >= (3, 5)
 
+try:
+    from types import InstanceType
+except ImportError:
+    InstanceType = object()  # To be unique
+
 
 def get_wrapped_object(obj):
     """
@@ -110,8 +115,11 @@ def get_wrapped_object(obj):
 
 def _invoke(self, attr, *args):
     obj = get_wrapped_object(self)
+    cls = type(obj)
+    if cls is InstanceType:
+        return getattr(obj, attr)(*map(get_wrapped_object, args))
     try:
-        method = object.__getattribute__(type(obj), attr)
+        method = object.__getattribute__(cls, attr)
     except AttributeError:
         return NotImplemented
     return method(obj, *map(get_wrapped_object, args))

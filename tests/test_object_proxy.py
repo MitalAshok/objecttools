@@ -31,3 +31,15 @@ class TestObjectProxy(unittest.TestCase):
         d = {1: 1, 2: 1}
         self.assertEqual(set(ObjectProxy(d).keys()), set(d.keys()))
         self.assertEqual(ObjectProxy('a').upper(), 'A')
+
+    def test_with_old_style(self):
+        class Old:
+            pass
+
+        old = Old()
+        if type(Old) is type:
+            return  # In Python 3, all classes are new-style
+
+        old.__add__ = lambda other: other + 2
+
+        self.assertEqual(old + 5, ObjectProxy(old) + 5, 'Not reading methods of old-style classes properly')
