@@ -41,18 +41,24 @@ def _get_dict(obj):
 
 class CachedProperty(object):
     """A property that caches its return value"""
-    __slots__ = ('_name', '_getter', '_setter', '_deleter', '_doc')
+    __slots__ = ('_name', '_getter', '_setter', '_deleter', '_doc', '__weakref__')
 
     def __init__(self, fget=None, can_set=False, can_del=False, doc=None, name=None):
         if doc is None:
             doc = getattr(fget, _FUNC_DOC, None)
         if name is None:
             name = getattr(fget, _FUNC_NAME, None)
-        self.can_set = bool(can_set)
-        self.can_delete = bool(can_del)
-        self.__doc__ = doc
-        self.name = name
-        self.getter(fget)
+        self._getter = fget
+        self._setter = bool(can_set)
+        self._deleter = bool(can_del)
+        if type(name) is str or name is None:
+            self._name = name
+        else:
+            raise TypeError('"name" must be a str or None')
+        if type(doc) is str or doc is None:
+            self._doc = doc
+        else:
+            raise TypeError('"__doc__" must be a str or None')
 
     @property
     def name(self):
@@ -229,10 +235,11 @@ class ThreadedCachedProperty(CachedProperty):
 
     def __init__(self, fget=None, can_set=False, can_del=False,
                  doc=None, name=None, lock=threading.RLock):
-        super(ThreadedCachedProperty, self).__init__(fget, can_set, can_del, doc, name)
         if callable(lock):
             lock = lock()
         self.lock = lock
+
+        super(ThreadedCachedProperty, self).__init__(fget, can_set, can_del, doc, name)
 
     def getter(self, fget):
         with self.lock:
