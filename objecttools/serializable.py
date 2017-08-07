@@ -94,7 +94,7 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
             self = cls.__new__(cls, getattr(f, METHOD_FUNC_ATTR), module)
             self.dict['__self__'] = getattr(f, METHOD_SELF_ATTR)
             if METHOD_HAS_CLASS:
-                self.dict['_SerializableFunction____self_____class__'] = f.im_class
+                self.dict['im_class'] = f.im_class
             return self
         code = SerializableCode(getattr(f, CODE_ATTR))
         if module is None:
@@ -130,7 +130,7 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
             if val is not _missing:
                 setattr(f, attr, val)
         __self__ = d.pop('__self__', _missing)
-        __class__ = d.pop('_SerializableFunction____self_____class__', _missing)
+        __class__ = d.pop('im_class', _missing)
         getattr(f, DICT_ATTR).update(d)
         if __self__ is not _missing:
             if METHOD_HAS_CLASS:
