@@ -2,7 +2,6 @@
 
 import sys
 import os
-import unittest
 import codecs
 
 from setuptools import setup, find_packages
@@ -21,11 +20,6 @@ finally:
 with codecs.open(os.path.join(__dir__, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
-
-def test_suite():
-    """Load tests from tests/__init__.py"""
-    test_loader = unittest.TestLoader()
-    return test_loader.discover(os.path.join(__dir__, 'tests'), pattern='__init__.py')
 
 setup_args = dict(
     name='objecttools',
@@ -65,7 +59,7 @@ setup_args = dict(
     extras_require={},
     entry_points={},
 
-    test_suite='setup.test_suite'
+    test_suite='tests'
 )
 
 

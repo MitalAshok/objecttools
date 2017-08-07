@@ -50,10 +50,10 @@ class TestSerializable(unittest.TestCase):
     def test_serializable_constant(self):
         const = SerializableConstant('unpicklable', __name__)
         self.assertIs(const.value, unpicklable, 'Constant objects are different')
-        with self.assertRaises(AttributeError):
+        with self.assertRaises((pickle.PicklingError, AttributeError)):
             self.assertIsInstance(pickle.dumps(unpicklable), type(b''))
         expected = unpicklable(1)
-        self.assertEqual(pickle.loads(pickle.dumps(const))(1), expected, 'Constant object is wrong after pickling')
+        self.assertEqual(pickle.loads(pickle.dumps(const)).value(1), expected, 'Constant object is wrong after pickling')
 
 
 if __name__ == '__main__':

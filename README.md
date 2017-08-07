@@ -71,6 +71,52 @@ class Class(object):
     pass
 ```
 
+## ObjectProxy
+
+Create a weak-referenceable proxy to an object that supports the same operations:
+
+```python
+from objecttools import ObjectProxy
+ 
+ls = [1, 2, 3]
+proxy = ObjectProxy(ls)
+ 
+proxy.append(4)
+proxy += [5, 6]
+proxy[2:4] = [7, 8, 9]
+print(ls)  # [1, 2, 7, 8, 9, 5, 6]
+```
+
+## serializable
+
+Create serializable forms of objects (For pickling)
+
+```python
+from objecttools import SerializableFunction, SerializableConstant
+import pickle
+ 
+file = open('file.txt', 'w')
+ 
+f = lambda file, a: file.write(a)
+ 
+try:
+    # Cannot pickle files, even though it is a global constant
+    gile = pickle.loads(pickle.dumps(file))
+except TypeError:
+    gile = pickle.loads(pickle.dumps(SerializableConstant('file', __name__)))
+ 
+try:
+    # Cannot pickle functions if they are lambdas
+    # Or are inner functions
+    # Or are deleted after creation
+    # Or are methods
+    g = pickle.loads(pickle.dumps(f))
+except pickle.PicklingError:
+    g = pickle.loads(pickle.dumps(SerializableFunction(f)))
+ 
+g(gile, 'data')  # Works
+```
+
 ## Installing
 
 ### From [PyPI](https://pypi.org/project/objecttools/)

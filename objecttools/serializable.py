@@ -32,6 +32,8 @@ else:
     METHOD_FUNC_ATTR = 'im_func'
     METHOD_SELF_ATTR = 'im_self'
 
+METHOD_HAS_CLASS = hasattr(types.MethodType, 'im_class')
+
 FUNCTION_ARGS = (
     CODE_ATTR, GLOBALS_ATTR, NAME_ATTR, DEFAULTS_ATTR, CLOSURE_ATTR
 )
@@ -91,6 +93,8 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
         if isinstance(f, types.MethodType):
             self = cls.__new__(cls, getattr(f, METHOD_FUNC_ATTR), module)
             self.dict['__self__'] = getattr(f, METHOD_SELF_ATTR)
+            if METHOD_HAS_CLASS:
+                self.dict['_SerializableFunction____self_____class__'] = f.im_class
             return self
         code = SerializableCode(getattr(f, CODE_ATTR))
         if module is None:
@@ -126,9 +130,15 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
             if val is not _missing:
                 setattr(f, attr, val)
         __self__ = d.pop('__self__', _missing)
+        __class__ = d.pop('_SerializableFunction____self_____class__', _missing)
         getattr(f, DICT_ATTR).update(d)
         if __self__ is not _missing:
-            f = types.MethodType(f, __self__)
+            if METHOD_HAS_CLASS:
+                if __class__ is _missing:
+                    __class__ = __self__.__class__
+                f = types.MethodType(f, __self__, __class__)
+            else:
+                f = types.MethodType(f, __self__)
         return f
 
     @property
@@ -190,7 +200,7 @@ class SerializableCode(collections.namedtuple('SerializableCode', ALL_CODE_ARGS)
         return {}
 
 
-class SerializableConstant(collections.namedtuple('SerializableConstant', ('name', 'module', 'get_value'))):
+class SerializableConstant(collections.namedtuple('SerializableConstant', ('name', 'module'))):
     """
     Serialize a constant value into the path to import it from.
 
@@ -210,27 +220,22 @@ class SerializableConstant(collections.namedtuple('SerializableConstant', ('name
 
     """
 
-    def __new__(cls, name, module, get_value=False):
+    def __new__(cls, name, module):
         """
         Create a new `SerializableConstant` object (Or return a constant)
 
         :param name: The name of the constant. Will `getattr()` the module for this.
           Set to `None` for the module itself.
-        :type: Optional[str]
+        :type name: Optional[str]
         :param module: The name of the module. Will import when getting the value.
-        :type: str
-        :param get_value: Set to `True` to get the value of the constant
-          instead of creating a `SerializableConstant`
-        :type: bool
+        :type module: str
         :return: Union[SerializableConstant, Any]
         """
-        if get_value:
-            return super(SerializableConstant, cls).__new__(cls, name, module, True).value
         if type(name) is not str and name is not None:
             raise TypeError('"name" must be a str')
         if type(module) is not str:
             raise TypeError('"module" must be a str')
-        return super(SerializableConstant, cls).__new__(cls, name, module, True)
+        return super(SerializableConstant, cls).__new__(cls, name, module)
 
     @property
     def value(self):
