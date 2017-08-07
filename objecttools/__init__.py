@@ -1,16 +1,18 @@
 """Various tools for working with objects and classes in Python"""
 
-from objecttools import cached_property, singletons, object_proxy
-
 from objecttools.cached_property import *
 from objecttools.singletons import *
 from objecttools.object_proxy import *
+from objecttools.serializable import *
 
-__all__ = ['cached_property', 'singletons', 'cmp']
+from objecttools import cached_property, singletons, object_proxy, serializable
+
+__all__ = ['cached_property', 'singletons', 'object_proxy', 'serializable', 'cmp']
 
 __all__.extend(cached_property.__all__)
 __all__.extend(singletons.__all__)
 __all__.extend(object_proxy.__all__)
+__all__.extend(serializable.__all__)
 
 __all__ = tuple(__all__)
 

@@ -103,6 +103,5 @@ class TestCachedProperty(unittest.TestCase):
         self.assertTrue(Test.x.is_cached(t), 'is_cached is wrong after cache')
         self.assertTrue(type(t).x.is_cached(t), 'Alternate is_cached is wrong after cache')
 
-
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,7 @@ try:
     from tests.test_singletons import TestSingletons
     from tests.test_cached_property import TestCachedProperty
     from tests.test_object_proxy import TestObjectProxy
+    from tests.test_serializable import TestSerializable
 finally:
     sys.path.pop(0)
 

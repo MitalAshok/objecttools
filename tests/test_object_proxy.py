@@ -43,3 +43,6 @@ class TestObjectProxy(unittest.TestCase):
         old.__add__ = lambda other: other + 2
 
         self.assertEqual(old + 5, ObjectProxy(old) + 5, 'Not reading methods of old-style classes properly')
+
+if __name__ == '__main__':
+    unittest.main()

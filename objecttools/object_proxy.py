@@ -1,3 +1,5 @@
+"""Define a proxy object for a Python objects, supporting the same dunder methods"""
+
 import sys
 from operator import (
     __abs__, __add__, __and__, __contains__, __delitem__,
