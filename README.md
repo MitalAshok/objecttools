@@ -103,7 +103,7 @@ try:
     # Cannot pickle files, even though it is a global constant
     gile = pickle.loads(pickle.dumps(file))
 except TypeError:
-    gile = pickle.loads(pickle.dumps(SerializableConstant('file', __name__)))
+    gile = pickle.loads(pickle.dumps(SerializableConstant('file', __name__))).value
  
 try:
     # Cannot pickle functions if they are lambdas
