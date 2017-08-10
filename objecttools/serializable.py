@@ -2,6 +2,7 @@
 
 import collections
 import types
+import warnings
 
 from objecttools import ThreadedCachedProperty, Singleton
 
@@ -45,6 +46,11 @@ ALL_CODE_ARGS = (
     'co_cellvars'
 )
 
+CODESTRING_INDEX = ALL_CODE_ARGS.index('co_code')
+LNOTAB_INDEX = ALL_CODE_ARGS.index('co_lnotab')
+
+COERCE_BYTES = (CODESTRING_INDEX, LNOTAB_INDEX)
+
 if hasattr(types.CodeType, 'co_kwonlyargcount'):
     CODE_ARGS = ALL_CODE_ARGS
 else:
@@ -56,7 +62,7 @@ else:
     )
 
 PY3_ATTRS = ('__kwdefaults__', '__qualname__', '__annotations__')
-OPT_ATTRS = ('__wrapped__',)
+OPT_ATTRS = ()  # ('__wrapped__',)
 
 
 class SerializableFunction(collections.namedtuple('SerializableFunction', (
@@ -68,6 +74,9 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
     NOTE: All attributes set on a function must also be serializable for instances
       of this class to be serializable
     """
+
+    """Set to `True` to raise a warning when a module cannot be imported for globals."""
+    warn_import = True
 
     def __new__(cls, f, module=None, *args):
         """
@@ -118,13 +127,16 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
 
     @ThreadedCachedProperty
     def value(self):
-        """The value of `self` as an (not serializable) `types.FunctionType` object"""
+        """The value of `self` as a (not serializable) `types.FunctionType` object"""
         f = types.FunctionType(
             self.code.value, self.globals, self.name, self.defaults, self.closure
         )
         d = self.dict.copy()
         for attr in PY3_ATTRS:
-            setattr(f, attr, d.pop(attr, None))
+            try:
+                setattr(f, attr, d.pop(attr, None))
+            except TypeError:
+                pass
         for attr in OPT_ATTRS:
             val = d.pop(attr, _missing)
             if val is not _missing:
@@ -139,12 +151,23 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
                 f = types.MethodType(f, __self__, __class__)
             else:
                 f = types.MethodType(f, __self__)
+                if __class__ is not _missing:
+                    f.im_class = __class__
         return f
+
+    value.can_delete = True
 
     @property
     def globals(self):
         """Find the globals of `self` by importing `self.module`"""
-        return vars(__import__(self.module, fromlist=self.module.split('.')))
+        try:
+            return vars(__import__(self.module, fromlist=self.module.split('.')))
+        except ImportError:
+            if self.warn_import:
+                warnings.warn(ImportWarning(
+                    'Cannot import module {} for SerializableFunction. Restricting to builtins.'.format(self.module)
+                ))
+            return {'__builtins__': __builtins__}
 
     def __repr__(self):
         """repr(self)"""
@@ -156,12 +179,6 @@ class SerializableFunction(collections.namedtuple('SerializableFunction', (
     def __call__(self, *args, **kwargs):
         """self(*args, **kwargs)"""
         return self.value(*args, **kwargs)
-
-    def __getstate__(self):
-        return {}
-
-    def __setstate__(self, state):
-        return
 
 
 class SerializableCode(collections.namedtuple('SerializableCode', ALL_CODE_ARGS)):
@@ -189,15 +206,17 @@ class SerializableCode(collections.namedtuple('SerializableCode', ALL_CODE_ARGS)
         kwonlyargcount = getattr(code, ALL_CODE_ARGS[1], 0)  # Not in Python 2.
         args = [argcount, kwonlyargcount]
         args.extend(getattr(code, attr) for attr in ALL_CODE_ARGS[2:])
+        for i in COERCE_BYTES:
+            try:
+                args[i] = bytes(args[i])
+            except TypeError:
+                args[i] = bytes(map(ord, args[i]))
         return super(SerializableCode, cls).__new__(cls, *args)
 
     @ThreadedCachedProperty
     def value(self):
         """The value of `self` as a (not serializable) `types.CodeType` object"""
         return types.CodeType(*(getattr(self, attr) for attr in CODE_ARGS))
-
-    def __getstate__(self):
-        return {}
 
 
 class SerializableConstant(collections.namedtuple('SerializableConstant', ('name', 'module'))):
@@ -244,6 +263,3 @@ class SerializableConstant(collections.namedtuple('SerializableConstant', ('name
         if self.name is None:
             return module
         return getattr(module, self.name)
-
-    def __getstate__(self):
-        return {}
